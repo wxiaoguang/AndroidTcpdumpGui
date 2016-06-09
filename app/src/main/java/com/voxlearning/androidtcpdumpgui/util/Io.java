@@ -148,9 +148,16 @@ public class Io {
         try {
             out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
             for (int i = 0; i < files.length; i++) {
+
+                File f = new File(files[i]);
+
+                //skip non-existing files
+                if(!f.exists())
+                    continue;
+
                 FileInputStream fi = null;
                 try {
-                    fi = new FileInputStream(files[i]);
+                    fi = new FileInputStream(f);
                     BufferedInputStream origin = new BufferedInputStream(fi, BUFFER_SIZE);
                     ZipEntry entry = new ZipEntry(files[i].substring(files[i].lastIndexOf("/") + 1));
                     out.putNextEntry(entry);

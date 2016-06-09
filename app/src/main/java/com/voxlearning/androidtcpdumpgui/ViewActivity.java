@@ -235,6 +235,6 @@ public class ViewActivity extends AppCompatActivity {
         intentShareFile.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + tmpZipFilePath));
         intentShareFile.putExtra(Intent.EXTRA_SUBJECT, "Tcpdump:" + mCaptureName);
         intentShareFile.putExtra(Intent.EXTRA_TEXT, mLastComment);
-        startActivity(Intent.createChooser(intentShareFile, "Share Captured Data:" + mCaptureName));
+        startActivity(Intent.createChooser(intentShareFile, "Captured:" + mCaptureName));
     }
 }
