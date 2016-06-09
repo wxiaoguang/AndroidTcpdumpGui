@@ -79,6 +79,7 @@ public class MainActivity extends AppCompatActivity {
         mSpinnerInterface.setAdapter(items);
     }
 
+    @SuppressLint("SdCardPath")
     private void chooseTcpdumpFilter() {
         AlertDialog.Builder b = new AlertDialog.Builder(this);
 
@@ -100,7 +101,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        b.setTitle("Filters: /sdcard/" + CaptureFilePath.ConfigFileName_TcpdumpFilters);
+        b.setTitle("/sdcard/.../" + CaptureFilePath.ConfigFileName_TcpdumpFilters);
         b.show();
     }
 

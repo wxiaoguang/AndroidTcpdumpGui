@@ -1,5 +1,6 @@
 package com.voxlearning.androidtcpdumpgui;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -16,6 +17,8 @@ import android.widget.EditText;
 
 import com.voxlearning.androidtcpdumpgui.util.Io;
 import com.voxlearning.androidtcpdumpgui.util.Str;
+
+import java.io.File;
 
 public class ViewActivity extends AppCompatActivity {
 
@@ -86,11 +89,13 @@ public class ViewActivity extends AppCompatActivity {
         doGoBack();
     }
 
+    @SuppressLint("DefaultLocale")
     private void loadCapture() {
         String dir = CaptureFilePath.OutputDir(mCaptureName);
 
         long startTime = Str.toLong(Str.trim(Io.readAll(dir + "/" + CaptureFilePath.FileName_Start)));
-        long stopTime = Str.toLong(Str.trim(Io.readAll(dir + "/" + CaptureFilePath.FileName_Start)));
+        long stopTime = Str.toLong(Str.trim(Io.readAll(dir + "/" + CaptureFilePath.FileName_Stop)));
+        long packetsSize = new File(dir + "/" + CaptureFilePath.FileName_Packets).length();
         String comment = Io.readAll(dir + "/" + CaptureFilePath.FileName_Comment);
         String tcpdumpOut = Io.readAll(dir + "/" + CaptureFilePath.FileName_TcpdumpOut);
         String logs = Io.readAll(dir + "/" + CaptureFilePath.FileName_Logs);
@@ -98,11 +103,17 @@ public class ViewActivity extends AppCompatActivity {
         mEditTextInfo.setText("");
 
         if(startTime != 0)
-            mEditTextInfo.append("Start:" + DateFormat.format("yyyy-MM-dd HH-mm-ss(z)", new java.util.Date(startTime)).toString() + "\n");
+            mEditTextInfo.append("Start: " + DateFormat.format("yyyy-MM-dd HH-mm-ss(z)", new java.util.Date(startTime)).toString() + "\n");
 
         if(stopTime != 0)
-            mEditTextInfo.append("Stop:" + DateFormat.format("yyyy-MM-dd HH-mm-ss(z)", new java.util.Date(stopTime)).toString() + "\n");
+            mEditTextInfo.append("Stop: " + DateFormat.format("yyyy-MM-dd HH-mm-ss(z)", new java.util.Date(stopTime)).toString() + "\n");
 
+        if(startTime != 0 && stopTime != 0) {
+            mEditTextInfo.append("Duration: " + String.format("%.2f", (stopTime - startTime) / 1000.0 / 60.0) + " minutes\n");
+        }
+        mEditTextInfo.append("Packets Size: " + String.format("%.2f", packetsSize/1024.0/1024.0) + "MB\n");
+
+        mEditTextInfo.append("\n\n");
         mEditTextInfo.append("Tcpdump Output:\n");
         if(tcpdumpOut != null)
             mEditTextInfo.append(tcpdumpOut);
@@ -146,7 +157,9 @@ public class ViewActivity extends AppCompatActivity {
     private void doGoBack() {
         final String comment = mEditTextComment.getText().toString();
         if(Str.isEmpty(mLastComment)) {
-            saveComment(comment);
+            if(!Str.isEmpty(comment)) {
+                saveComment(comment);
+            }
             finish();
             return;
         }
