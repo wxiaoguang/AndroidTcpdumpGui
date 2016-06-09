@@ -17,6 +17,9 @@ if [ ! -f $ASSETS_BIN_ARM/busybox ]; then
 fi
 
 echo "Assembling AndroidTcpdumpGui ..."
-gradle :app:assembleRelease
-
-echo "Done"
+if gradle :app:assembleRelease; then
+    cp app/build/outputs/apk/app-release-unsigned.apk ./AndroidTcpdumpGui.apk
+    echo "Done"
+else
+    echo "Error"
+fi
