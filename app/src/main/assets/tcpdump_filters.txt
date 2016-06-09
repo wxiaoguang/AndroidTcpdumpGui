@@ -1,0 +1,5 @@
+no 10.0.0.0/8 = not ( src net 10.0.0.0/8 and dst net 10.0.0.0/8 )
+no 172.16.0.0/12 = not ( src net 172.16.0.0/12 and dst net 172.16.0.0/12 )
+no 192.168.0.0/16 = not ( src net 192.168.0.0/16 and dst net 192.168.0.0/16 )
+no loopback = not ( src net 127.0.0.0/8 and dst net 127.0.0.0/8 )
+no genymotion = not ( src net 192.168.0.0/16 and dst net 192.168.0.0/16 )

@@ -1,0 +1,24 @@
+export TCPDUMP=4.7.4
+export LIBPCAP=1.7.4
+
+wget http://www.tcpdump.org/release/tcpdump-$TCPDUMP.tar.gz
+wget http://www.tcpdump.org/release/libpcap-$LIBPCAP.tar.gz
+
+tar zxvf tcpdump-$TCPDUMP.tar.gz
+tar zxvf libpcap-$LIBPCAP.tar.gz
+export CC=arm-linux-gnueabi-gcc
+cd libpcap-$LIBPCAP
+./configure --host=arm-linux --with-pcap=linux
+make
+cd ..
+
+cd tcpdump-$TCPDUMP
+export ac_cv_linux_vers=2
+export CFLAGS=-static
+export CPPFLAGS=-static
+export LDFLAGS=-static
+
+./configure --host=arm-linux --disable-ipv6
+make
+
+arm-linux-gnueabi-strip tcpdump
