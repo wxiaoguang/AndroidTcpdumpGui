@@ -1,10 +1,15 @@
 package com.voxlearning.androidtcpdumpgui;
 
+import android.Manifest;
 import android.annotation.SuppressLint;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.LocationManager;
 import android.os.Handler;
 import android.os.Looper;
+import android.provider.Settings;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -126,13 +131,17 @@ public class MainActivity extends AppCompatActivity {
         startService(intent);
 
         mTimerUpdateUi.postDelayed();
+        updateUi();
     }
 
     private void doStop() {
         String captureName = mCaptureManager.stop(this);
+
         Intent intent = new Intent(this, CaptureService.class);
         intent.setAction(CaptureService.ServiceAction_CaptureStop);
         startService(intent);
+
+        updateUi();
 
         if(captureName != null) {
             ViewActivity.openCapture(this, captureName);
@@ -144,6 +153,8 @@ public class MainActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        updateTitleWithVersion();
 
         mHandler = new Handler(Looper.getMainLooper());
         mTimerUpdateUi = new TimerUpdateUi();
@@ -192,7 +203,6 @@ public class MainActivity extends AppCompatActivity {
                 else {
                     doStart();
                 }
-                updateUi();
             }
         });
 
@@ -212,7 +222,7 @@ public class MainActivity extends AppCompatActivity {
         else {
             mButtonStartStop.setText("Start");
 
-            setTitle(R.string.app_name);
+            updateTitleWithVersion();
 
             File[] files = new File(CaptureFilePath.OutputDir("")).listFiles();
             List<String> names = new ArrayList<>();
@@ -242,6 +252,36 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         updateUi();
         mTimerUpdateUi.postDelayed();
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Location")
+                    .setMessage("Please allow this app to use GPS & Network Location")
+                    .show();
+        }
+
+
+        LocationManager locationManager = (LocationManager) getSystemService(LOCATION_SERVICE);
+        boolean isGpsLocationEnabled = locationManager.isProviderEnabled(LocationManager.GPS_PROVIDER);
+
+        if(!isGpsLocationEnabled) {
+            new AlertDialog.Builder(this)
+                    .setTitle("Location").setMessage("GPS is not enabled. Do you want to go to settings menu?")
+                    .setPositiveButton("Settings", new DialogInterface.OnClickListener() {
+                        public void onClick(DialogInterface dialog, int which) {
+                            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
+                            MainActivity.this.startActivity(intent);
+                        }
+                    }).setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.cancel();
+                }
+            }).show();
+        }
     }
 
+    private void updateTitleWithVersion() {
+        String s = getString(R.string.app_name);
+        setTitle(s + " (" + BuildConfig.VERSION_NAME + "/" + BuildConfig.VERSION_CODE + ")");
+    }
 }

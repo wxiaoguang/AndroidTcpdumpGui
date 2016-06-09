@@ -38,6 +38,7 @@ public class CaptureFilePath {
     static public final String FileName_Comment = "comment.txt";
     static public final String FileName_Apps = "apps.txt";
     static public final String FileName_Logs = "logs.txt";
+    static public final String FileName_Gps = "gps.txt";
     static public final String FileName_TcpdumpOut = "tcpdump.out.txt";
     static public final String FileName_Packets = "packets.pcap";
 

@@ -213,6 +213,7 @@ public class ViewActivity extends AppCompatActivity {
                 dirCapture + "/" + CaptureFilePath.FileName_Stop,
                 dirCapture + "/" + CaptureFilePath.FileName_Apps,
                 dirCapture + "/" + CaptureFilePath.FileName_Comment,
+                dirCapture + "/" + CaptureFilePath.FileName_Gps,
                 dirCapture + "/" + CaptureFilePath.FileName_Logs,
                 dirCapture + "/" + CaptureFilePath.FileName_Packets,
                 dirCapture + "/" + CaptureFilePath.FileName_TcpdumpOut,

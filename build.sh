@@ -18,7 +18,9 @@ fi
 
 echo "Assembling AndroidTcpdumpGui ..."
 if gradle :app:assembleRelease; then
-    cp app/build/outputs/apk/app-release-unsigned.apk ./AndroidTcpdumpGui.apk
+    if [ -f app/build/outputs/apk/app-release.apk ]; then
+        cp app/build/outputs/apk/app-release.apk ./AndroidTcpdumpGui.apk
+    fi
     echo "Done"
 else
     echo "Error"

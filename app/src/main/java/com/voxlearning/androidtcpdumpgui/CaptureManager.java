@@ -8,7 +8,11 @@ import android.app.usage.UsageStatsManager;
 import android.content.Context;
 import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
+import android.location.Location;
+import android.net.ConnectivityManager;
+import android.net.NetworkInfo;
 import android.os.Build;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.widget.Toast;
 
@@ -129,12 +133,12 @@ public class CaptureManager {
 
         if(!dirRunning.exists()) {
             Log.e(TAG, "can not mkdir " + dirRunning.getPath());
+            Toast.makeText(context, "Can not write to external storage. Broken sdcard or memory?", Toast.LENGTH_LONG).show();
             return;
         }
 
-
         try {
-            recordStart();
+            recordStart(context);
 
             String fnPackets = CaptureFilePath.OutputDirRunningFilePath(CaptureFilePath.FileName_Packets);
             String fnTcpdumpOut = CaptureFilePath.OutputDirRunningFilePath(CaptureFilePath.FileName_TcpdumpOut);
@@ -255,10 +259,44 @@ public class CaptureManager {
         recordLog("app: " + appName);
     }
 
-    private void recordStart() {
+    private void recordStart(Context context) {
         String fn = CaptureFilePath.OutputDirRunningFilePath(CaptureFilePath.FileName_Start);
         Io.writeFile(fn, "" + System.currentTimeMillis());
-        recordLog("start");
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("MANUFACTURER=").append(Build.MANUFACTURER).append("; ")
+                .append("MODEL=").append(Build.MODEL).append("; ")
+                .append("SERIAL=").append(Build.SERIAL).append("\n")
+        ;
+        sb.append("FINGERPRINT=").append(Build.FINGERPRINT).append("\n");
+        sb.append("RadioVersion=").append(Build.getRadioVersion()).append("\n");
+
+        TelephonyManager tm = (TelephonyManager) context.getSystemService(Context.TELEPHONY_SERVICE);
+        String tmDevice = "", tmSerial = "", androidId = "";
+        try {
+            tmDevice = tm.getDeviceId();
+        }catch (Exception ignored){}
+        try {
+            tmSerial = tm.getSimSerialNumber();
+        }catch (Exception ignored){}
+        try{
+            androidId = android.provider.Settings.Secure.getString(context.getContentResolver(), android.provider.Settings.Secure.ANDROID_ID);
+        }catch (Exception ignored){}
+
+        sb.append("DeviceId=").append(tmDevice).append("; ")
+                .append("AndroidId=").append(androidId).append("; ")
+                .append("SimSerialNumber=").append(tmSerial).append("\n");
+
+
+        NetworkInfo ni = null;
+        try {
+            ConnectivityManager cm = (ConnectivityManager)context.getSystemService(Context.CONNECTIVITY_SERVICE);
+            ni = cm.getActiveNetworkInfo();
+        }
+        catch (Exception ignored) { }
+        sb.append("NetworkInfo=").append(ni == null ? "null" : ni.toString()).append("\n");
+
+        recordLog("start\n" + sb.toString());
     }
 
     private void recordStop() {
@@ -267,18 +305,19 @@ public class CaptureManager {
         recordLog("stop");
     }
 
-    public void recordComment(String s) {
-        String fn = CaptureFilePath.OutputDirRunningFilePath(CaptureFilePath.FileName_Comment);
-        Io.writeFileAppend(fn, nowLogString() + " " + s + "\n");
-        recordLog("comment: " + s);
-    }
-
     public void recordLog(String s) {
         String fn = CaptureFilePath.OutputDirRunningFilePath(CaptureFilePath.FileName_Logs);
         Io.writeFileAppend(fn, nowLogString() + " " + s + "\n");
         Log.d(TAG, "recordLog: " + s);
     }
 
+    public void recordGps(Location location) {
+        String fn = CaptureFilePath.OutputDirRunningFilePath(CaptureFilePath.FileName_Gps);
+        String s = location == null ? "(unknown-location)" : location.toString();
+
+        Io.writeFileAppend(fn, nowLogString() + " " + s + "\n");
+        Log.d(TAG, "recordGps: " + s);
+    }
 
     static public class Stats {
         public long mStartTime;
