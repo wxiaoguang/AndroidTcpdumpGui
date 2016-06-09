@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.net.Uri;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
@@ -14,6 +15,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.voxlearning.androidtcpdumpgui.util.Io;
 import com.voxlearning.androidtcpdumpgui.util.Str;
@@ -75,6 +77,10 @@ public class ViewActivity extends AppCompatActivity {
         switch (item.getItemId()) {
             case R.id.menu_delete:
                 doDelete();
+                return true;
+
+            case R.id.menu_share:
+                doSaveCommentZipShare();
                 return true;
 
             case android.R.id.home:
@@ -148,18 +154,24 @@ public class ViewActivity extends AppCompatActivity {
         b.show();
     }
 
+    private void saveComment() {
+        String comment = mEditTextComment.getText().toString();
+        saveComment(comment);
+    }
+
     private void saveComment(String comment) {
-        String dir = CaptureFilePath.OutputDir(mCaptureName);
-        Io.writeFile(dir + "/" + CaptureFilePath.FileName_Comment, comment);
-        Io.writeFileAppend(dir + "/" + CaptureFilePath.FileName_Logs, CaptureManager.nowLogString() + " comment:" + comment + "\n");
+        if(!Str.eq(comment, mLastComment)) {
+            String dir = CaptureFilePath.OutputDir(mCaptureName);
+            Io.writeFile(dir + "/" + CaptureFilePath.FileName_Comment, comment);
+            Io.writeFileAppend(dir + "/" + CaptureFilePath.FileName_Logs, CaptureManager.nowLogString() + " comment:" + comment + "\n");
+            mLastComment = comment;
+        }
     }
 
     private void doGoBack() {
         final String comment = mEditTextComment.getText().toString();
         if(Str.isEmpty(mLastComment)) {
-            if(!Str.isEmpty(comment)) {
-                saveComment(comment);
-            }
+            saveComment(comment);
             finish();
             return;
         }
@@ -190,5 +202,39 @@ public class ViewActivity extends AppCompatActivity {
         b.show();
     }
 
-}
 
+    private void doSaveCommentZipShare() {
+
+        saveComment();
+
+        String dirCapture = CaptureFilePath.OutputDir(mCaptureName);
+        String []files = new String[] {
+                dirCapture + "/" + CaptureFilePath.FileName_Start,
+                dirCapture + "/" + CaptureFilePath.FileName_Stop,
+                dirCapture + "/" + CaptureFilePath.FileName_Apps,
+                dirCapture + "/" + CaptureFilePath.FileName_Comment,
+                dirCapture + "/" + CaptureFilePath.FileName_Logs,
+                dirCapture + "/" + CaptureFilePath.FileName_Packets,
+                dirCapture + "/" + CaptureFilePath.FileName_TcpdumpOut,
+        };
+
+
+        String dirTmpShare = CaptureFilePath.BaseDir() + "/tmp/share";
+        Io.deleteFollowSymlink(dirTmpShare);
+        new File(dirTmpShare).mkdirs();
+
+        String tmpZipFilePath = dirTmpShare + "/" + mCaptureName + ".zip";
+        if(!Io.zip(files, tmpZipFilePath)) {
+            Toast.makeText(this, "Failed to zip files", Toast.LENGTH_LONG).show();
+            return;
+        }
+
+
+        Intent intentShareFile = new Intent(Intent.ACTION_SEND);
+        intentShareFile.setType("application/zip");
+        intentShareFile.putExtra(Intent.EXTRA_STREAM, Uri.parse("file://" + tmpZipFilePath));
+        intentShareFile.putExtra(Intent.EXTRA_SUBJECT, "Tcpdump:" + mCaptureName);
+        intentShareFile.putExtra(Intent.EXTRA_TEXT, mLastComment);
+        startActivity(Intent.createChooser(intentShareFile, "Share Captured Data:" + mCaptureName));
+    }
+}

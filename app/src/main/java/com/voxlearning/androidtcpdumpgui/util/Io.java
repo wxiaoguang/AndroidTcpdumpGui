@@ -6,6 +6,8 @@ import android.util.Log;
 
 import com.voxlearning.androidtcpdumpgui.CaptureFilePath;
 
+import java.io.BufferedInputStream;
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
 import java.io.Closeable;
 import java.io.File;
@@ -14,8 +16,12 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipOutputStream;
 
 public class Io {
+
+    static private final String TAG = "Io";
 
     static public void close(Closeable c) {
         if (c == null)
@@ -111,7 +117,7 @@ public class Io {
         InputStream is = null;
         FileOutputStream fos = null;
 
-        Log.i("Io", "extracting " + assetFilePath + " to " + outFilePath + " ...");
+        Log.i(TAG, "extracting " + assetFilePath + " to " + outFilePath + " ...");
         try {
             is = context.getAssets().open(assetFilePath);
             if (outFilePath.startsWith("/")) {
@@ -126,11 +132,45 @@ public class Io {
             }
             return true;
         } catch (IOException e) {
-            Log.e("Io", "can not extract " + assetFilePath + " to " + outFilePath, e);
+            Log.e(TAG, "can not extract " + assetFilePath + " to " + outFilePath, e);
             return false;
         } finally {
             Io.close(is);
             Io.close(fos);
+        }
+    }
+
+    static public boolean zip(String[] files, String zipFile) {
+        ZipOutputStream out = null;
+        int BUFFER_SIZE = 4096;
+        byte data[] = new byte[BUFFER_SIZE];
+
+        try {
+            out = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(zipFile)));
+            for (int i = 0; i < files.length; i++) {
+                FileInputStream fi = null;
+                try {
+                    fi = new FileInputStream(files[i]);
+                    BufferedInputStream origin = new BufferedInputStream(fi, BUFFER_SIZE);
+                    ZipEntry entry = new ZipEntry(files[i].substring(files[i].lastIndexOf("/") + 1));
+                    out.putNextEntry(entry);
+
+                    int count;
+                    while ((count = origin.read(data, 0, BUFFER_SIZE)) != -1) {
+                        out.write(data, 0, count);
+                    }
+                } finally {
+                    close(fi);
+                }
+            }
+            return true;
+        }
+        catch (IOException e) {
+            Log.e(TAG, "can not zip files: " + e.getMessage(), e);
+            return false;
+        }
+        finally {
+            close(out);
         }
     }
 }
