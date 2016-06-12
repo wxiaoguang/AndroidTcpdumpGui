@@ -282,6 +282,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void updateTitleWithVersion() {
         String s = getString(R.string.app_name);
-        setTitle(s + " (" + BuildConfig.VERSION_NAME + "/" + BuildConfig.VERSION_CODE + ")");
+        setTitle(s + " (" + BuildConfig.VERSION_NAME + "-" + BuildConfig.VERSION_CODE + ")");
     }
 }
